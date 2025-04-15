@@ -32,17 +32,42 @@ def main():
     game_state = ChessEngine.GameState()
     load_images()
     running = True
+    square_selected = () # Keep track of the last click of the user (row, col)
+    player_clicks = [] # two tuples
     while running:
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
+            #Mouse handler
+            elif e.type == p.MOUSEBUTTONDOWN:
+                location = p.mouse.get_pos()
+                col = location[0] // SQ_SIZE
+                row = location[1] // SQ_SIZE
+                if square_selected == (row, col): # The user clicked the same square twice
+                    square_selected = ()
+                    player_clicks = []
+                else:
+                    square_selected = (row ,col)
+                    player_clicks.append(square_selected)
+                if len(player_clicks) == 2:
+                    move = ChessEngine.Move(player_clicks[0], player_clicks[1], game_state.board)
+                    print(move.get_chess_notation())
+                    game_state.make_move(move)
+                    square_selected = () # Reset user clicks
+                    player_clicks = []
+
+            #Key handler
+            elif e.type == p.KEYDOWN:
+                    if e.key == p.K_z:
+                        game_state.undo_move()
+
         draw_game_state(screen, game_state)
         clock.tick(MAX_FPS)
         p.display.flip()
 
 def draw_game_state(screen, game_state):
     """
-    Responisble for all the graphics within current game state.
+    Responsible for all the graphics within current game state.
     """
     draw_board(screen)
     draw_pieces(screen, game_state.board)
