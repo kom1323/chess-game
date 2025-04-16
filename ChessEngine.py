@@ -26,6 +26,12 @@ class GameState():
                                'B': self.get_bishop_moves, 'Q': self.get_queen_moves, 'K': self.get_king_moves}
         self.white_to_move = True
         self.move_log = []
+        self.white_king_location = (7, 4)
+        self.black_king_location = (0, 4)
+        self.checkmate = False
+        #self.stalemate = False
+        self.pins = []
+        self.checks = []
 
     def make_move(self, move):
         """
@@ -35,6 +41,11 @@ class GameState():
         self.board[move.end_row][move.end_col] = move.piece_moved
         self.move_log.append(move) # log the move
         self.white_to_move = not self.white_to_move #swap players
+        # Update king's position
+        if move.piece_moved == 'wK':
+            self.white_king_location =(move.end_row, move.end_col)
+        elif move.piece_moved == 'bK':
+            self.black_king_location =(move.end_row, move.end_col)
 
     def undo_move(self):
         if len(self.move_log) != 0:
@@ -42,13 +53,87 @@ class GameState():
             self.board[move.start_row][move.start_col] = move.piece_moved
             self.board[move.end_row][move.end_col] = move.piece_captured
             self.white_to_move = not self.white_to_move
+        # Update king's position
+        if move.piece_moved == 'wK':
+            self.white_king_location =(move.start_row, move.start_col)
+        elif move.piece_moved == 'bK':
+            self.black_king_location =(move.start_row, move.start_col)
 
 
     def get_valid_moves(self):
         """
         All moves considering checks.
         """
+        moves = []
+        self.in_check, self.pins, self.checks = self.check_for_pins_and_checks()
+
+
+
         return self.get_all_possible_moves()
+    
+
+    def check_for_pins_and_checks(self):
+        pins = []
+        checks = []
+        in_check = False
+        if self.white_to_move:
+            enemy_color = 'b'
+            ally_color = 'w'
+            start_row = self.white_king_location[0]
+            start_col = self.white_king_location[1]
+        else:
+            enemy_color = 'w'
+            ally_color = 'b'
+            start_row = self.black_king_location[0]
+            start_col = self.black_king_location[1]
+        
+        # Check outwards from king for pins and checks, keep track of pins
+        possible_directions = ((-1, 0), (0, -1), (1, 0), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1))
+        for dir_iter in range(len(possible_directions)):
+            direction = possible_directions[dir_iter]
+            possible_pin = () # reset possible pins
+            for i in range(1, 8):
+                end_row = start_row + direction[0] * i
+                end_col = start_col + direction[1] * i
+                if 0 <= end_row < 8 and 0 <= end_col < 8:
+                    end_piece = self.board[end_row][end_col]
+                    if end_piece[0] == ally_color:
+                        if possible_pin == () # 1st allied piece could be pinned
+                            possible_pin = (end_row, end_col, direction[0], direction[1])
+                        else: # 2st allied piece , so no pin or check possible in this direction
+                            break
+                    elif end_piece[0] == enemy_color:
+                        piece_type = end_piece[1]
+                        # 5 possibilities here
+                        # 1) orthogonally away from king and piece is a rook
+                        # 2) diagonally away from king and piece is a bishop
+                        # 3) 1 square away diagonally from king and piece is a pawn
+                        # 4) any direction and piece is a queen
+                        # 5) any direction and 1 square away and piece is a king (this is necessary to prevent a king move to a square controlled by another king)
+
+
+    def in_check(self):
+        """
+        DONT FORGET TO MAYBE DELETE
+        """
+        if self.white_to_move:
+            return self.square_under_attack(self.white_king_location[0], self.white_king_location[1])
+        else:
+            return self.square_under_attack(self.black_king_location[0], self.black_king_location[1])
+
+
+    def square_under_attack(self, row, col):
+        """
+        DONT FORGET TO MAYBE DELETE
+        """
+        self.white_to_move = not self.white_to_move
+        opponent_moves = self.get_all_possible_moves()
+        self.white_to_move = not self.white_to_move
+        for move in opponent_moves:
+            if move.end_row == row and move.end_col == col:
+                return True
+        return False 
+    
 
     def get_all_possible_moves(self):
         """
@@ -99,120 +184,124 @@ class GameState():
     
     
     def get_rook_moves(self, row, col, moves):
-        if self.white_to_move:
-            for row_iter in range(row + 1, 8):
-                if self.board[row_iter][col][0] != 'w':
-                    moves.append(Move((row, col), (row_iter, col), self.board))
-                if self.board[row_iter][col] != '--':
-                    break
-            for row_iter in range(row - 1, -1, -1):
-                if self.board[row_iter][col][0] != 'w':
-                    moves.append(Move((row, col), (row_iter, col), self.board))
-                if self.board[row_iter][col] != '--':
-                    break
-            for col_iter in range(col + 1, 8):
-                if self.board[row][col_iter][0] != 'w':
-                    moves.append(Move((row, col), (row, col_iter), self.board))
-                if self.board[row][col_iter] != '--':
-                    break
-            for col_iter in range(col -1, -1, -1):
-                if self.board[row_iter][col][0] != 'w':
-                    moves.append(Move((row, col), (col_iter, col), self.board))
-                if self.board[row_iter][col] != '--':
-                    break
-        else:
-            for row_iter in range(row + 1, 8):
-                if self.board[row_iter][col][0] != 'b':
-                    moves.append(Move((row, col), (row_iter, col), self.board))
-                if self.board[row_iter][col] != '--':
-                    break
-            for row_iter in range(row - 1, -1, -1):
-                if self.board[row_iter][col][0] != 'b':
-                    moves.append(Move((row, col), (row_iter, col), self.board))
-                if self.board[row_iter][col] != '--':
-                    break
-            for col_iter in range(col + 1, 8):
-                if self.board[row][col_iter][0] != 'b':
-                    moves.append(Move((row, col), (row, col_iter), self.board))
-                if self.board[row][col_iter] != '--':
-                    break
-            for col_iter in range(col -1, -1, -1):
-                if self.board[row_iter][col][0] != 'b':
-                    moves.append(Move((row, col), (col_iter, col), self.board))
-                if self.board[row_iter][col] != '--':
-                    break
+        current_turn_color = 'w' if self.white_to_move else 'b'
+        # up
+        for it in range(1, 8):
+            row_iter = row - it
+            if row_iter < 0:
+                break
+            if self.board[row_iter][col][0] != current_turn_color:  
+                moves.append(Move((row, col), (row_iter, col), self.board))
+            if self.board[row_iter][col] != '--':
+                break
 
+        # down
+        for it in range(1, 8):
+            row_iter = row + it
+            if row_iter > 7:
+                break
+            if self.board[row_iter][col][0] != current_turn_color:  
+                moves.append(Move((row, col), (row_iter, col), self.board))
+            if self.board[row_iter][col] != '--':
+                break
+
+        # right
+        for it in range(1, 8):
+            col_iter = col + it
+            if col_iter > 7:
+                break
+            if self.board[row][col_iter][0] != current_turn_color:  
+                moves.append(Move((row, col), (row, col_iter), self.board))
+            if self.board[row][col_iter] != '--':
+                break
+        # left
+        for it in range(1, 8):
+            col_iter = col - it
+            if col_iter < 0:
+                break
+            if self.board[row][col_iter][0] != current_turn_color:  
+                moves.append(Move((row, col), (row, col_iter), self.board))
+            if self.board[row][col_iter] != '--':
+                break
+        
 
     def get_knight_moves(self, row, col, moves):
-        
+        current_turn_color = 'w' if self.white_to_move else 'b'
         possible_moves = [(row - 2, col + 1), (row - 1, col + 2),
                             (row + 1, col + 2), (row + 2, col + 1),
                             (row + 2, col - 1), (row + 1, col - 2),
                             (row - 1, col - 2), (row - 2, col - 1)
                             ]
         
-        if self.white_to_move:
-            for move in possible_moves:
-                if move[0] <= 7 and move[1] <= 7 and self.board[move[0]][move[1]][0] != 'w':
-                    moves.append(Move((row, col), move, self.board))
-        else:
-            for move in possible_moves:
-                if move[0] <= 7 and move[1] <= 7 and self.board[move[0]][move[1]][0] != 'b':
-                    moves.append(Move((row, col), move, self.board))
+        for move in possible_moves:
+            if (move[0] <= 7 and move[1] <= 7 and move[0] >= 0 and move[1] >= 0 and 
+                self.board[move[0]][move[1]][0] != current_turn_color):
+                moves.append(Move((row, col), move, self.board))
+  
 
 
 
 
     def get_bishop_moves(self, row, col, moves):
-        if self.white_to_move:
-            # down-right
-            for it in range(1, 8):
-                row_iter = row + it
-                col_iter = col + it
-                if col_iter >= 8 and row_iter >= 8:
-                    break
-                if self.board[row_iter][col_iter][0] != 'w':
-                    moves.append(Move((row, col), (row_iter, col_iter), self.board))
-                if self.board[row_iter][col_iter] != '--':
-                    break  
-            
-            #down-left
-            for it in range(1, 8):
-                row_iter = row + it
-                col_iter = col - it
-                if col_iter < 0 and row_iter >= 8:
-                    break
-                if self.board[row_iter][col_iter][0] != 'w':
-                    moves.append(Move((row, col), (row_iter, col_iter), self.board))
-                if self.board[row_iter][col_iter] != '--':
-                    break
+        current_turn_color = 'w' if self.white_to_move else 'b'
+        
+        # down-right
+        for it in range(1, 8):
+            row_iter = row + it
+            col_iter = col + it
+            if col_iter > 7 or row_iter > 7:
+                break
+            if self.board[row_iter][col_iter][0] != current_turn_color:
+                moves.append(Move((row, col), (row_iter, col_iter), self.board))
+            if self.board[row_iter][col_iter] != '--':
+                break  
+        
+        #down-left
+        for it in range(1, 8):
+            row_iter = row + it
+            col_iter = col - it
+            if col_iter < 0 or row_iter > 7:
+                break
+            if self.board[row_iter][col_iter][0] != current_turn_color:
+                moves.append(Move((row, col), (row_iter, col_iter), self.board))
+            if self.board[row_iter][col_iter] != '--':
+                break
 
-            #up-right
-            for it in range(1, 8):
-                row_iter = row - it
-                col_iter = col + it
-                if col_iter >= 8 and row_iter < 0:
-                    break
-                if self.board[row_iter][col_iter][0] != 'w':
-                    moves.append(Move((row, col), (row_iter, col_iter), self.board))
-                if self.board[row_iter][col_iter] != '--':
-                    break
+        #up-right
+        for it in range(1, 8):
+            row_iter = row - it
+            col_iter = col + it
+            if col_iter > 7 or row_iter < 0:
+                break
+            if self.board[row_iter][col_iter][0] != current_turn_color:
+                moves.append(Move((row, col), (row_iter, col_iter), self.board))
+            if self.board[row_iter][col_iter] != '--':
+                break
 
-            #up-left
-            for it in range(1, 8):
-                row_iter = row - it
-                col_iter = col - it
-                if col_iter < 0 and row_iter < 0:
-                    break
-                if self.board[row_iter][col_iter][0] != 'w':
-                    moves.append(Move((row, col), (row_iter, col_iter), self.board))
-                if self.board[row_iter][col_iter] != '--':
-                    break
+        #up-left
+        for it in range(1, 8):
+            row_iter = row - it
+            col_iter = col - it
+            if col_iter < 0 or row_iter < 0:
+                break
+            if self.board[row_iter][col_iter][0] != current_turn_color:
+                moves.append(Move((row, col), (row_iter, col_iter), self.board))
+            if self.board[row_iter][col_iter] != '--':
+                break
 
     def get_queen_moves(self, row, col, moves):
-        pass
+        self.get_bishop_moves(row, col, moves)
+        self.get_rook_moves(row, col, moves)
     def get_king_moves(self, row, col, moves):
-        pass
+        current_turn_color = 'w' if self.white_to_move else 'b'
+        possible_moves = [(row - 1, col - 1), (row - 1, col), (row - 1, col + 1),
+                          (row, col - 1), (row, col), (row, col + 1),
+                          (row + 1, col - 1), (row + 1, col), (row + 1, col + 1)]
+        
+        for move in possible_moves:
+            if (move[0] <= 7 and move[1] <= 7 and move[0] >= 0 and move[1] >= 0 and 
+                self.board[move[0]][move[1]][0] != current_turn_color):
+                moves.append(Move((row, col), move, self.board))
     
 class Move():
 
