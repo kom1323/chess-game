@@ -165,48 +165,49 @@ class GameState():
 
     def get_bishop_moves(self, row, col, moves):
         if self.white_to_move:
-            for row_iter in range(row + 1, 8):
-                # fix col - (row_iter - row) range, currently out of bounds
-                if self.board[row_iter][col + (row_iter - row)][0] != 'w':
-                    moves.append(Move((row, col), (row_iter, col + (row_iter - row)), self.board))
-                if self.board[row_iter][col + (row_iter - row)] != '--':
+            # down-right
+            for it in range(1, 8):
+                row_iter = row + it
+                col_iter = col + it
+                if col_iter >= 8 and row_iter >= 8:
                     break
-                if self.board[row_iter][col - (row_iter - row)][0] != 'w':
-                    moves.append(Move((row, col), (row_iter, col - (row_iter - row)), self.board))
-                if self.board[row_iter][col - (row_iter - row)] != '--':
-                    break
+                if self.board[row_iter][col_iter][0] != 'w':
+                    moves.append(Move((row, col), (row_iter, col_iter), self.board))
+                if self.board[row_iter][col_iter] != '--':
+                    break  
             
-            for row_iter in range(row - 1, -1, -1):
-                if self.board[row_iter][col + (row_iter - row)][0] != 'w':
-                    moves.append(Move((row, col), (row_iter, col + (row_iter - row)), self.board))
-                if self.board[row_iter][col + (row_iter - row)] != '--':
+            #down-left
+            for it in range(1, 8):
+                row_iter = row + it
+                col_iter = col - it
+                if col_iter < 0 and row_iter >= 8:
                     break
-                if self.board[row_iter][col - (row_iter - row)][0] != 'w':
-                    moves.append(Move((row, col), (row_iter, col - (row_iter - row)), self.board))
-                if self.board[row_iter][col - (row_iter - row)] != '--':
-                    break
-        else:
-            for row_iter in range(row + 1, 8):
-                if self.board[row_iter][col + (row_iter - row)][0] != 'b':
-                    moves.append(Move((row, col), (row_iter, col + (row_iter - row)), self.board))
-                if self.board[row_iter][col + (row_iter - row)] != '--':
-                    break
-                if self.board[row_iter][col - (row_iter - row)][0] != 'b':
-                    moves.append(Move((row, col), (row_iter, col - (row_iter - row)), self.board))
-                if self.board[row_iter][col - (row_iter - row)] != '--':
-                    break
-            
-            for row_iter in range(row - 1, -1, -1):
-                if self.board[row_iter][col + (row_iter - row)][0] != 'b':
-                    moves.append(Move((row, col), (row_iter, col + (row_iter - row)), self.board))
-                if self.board[row_iter][col + (row_iter - row)] != '--':
-                    break
-                if self.board[row_iter][col - (row_iter - row)][0] != 'b':
-                    moves.append(Move((row, col), (row_iter, col - (row_iter - row)), self.board))
-                if self.board[row_iter][col - (row_iter - row)] != '--':
+                if self.board[row_iter][col_iter][0] != 'w':
+                    moves.append(Move((row, col), (row_iter, col_iter), self.board))
+                if self.board[row_iter][col_iter] != '--':
                     break
 
+            #up-right
+            for it in range(1, 8):
+                row_iter = row - it
+                col_iter = col + it
+                if col_iter >= 8 and row_iter < 0:
+                    break
+                if self.board[row_iter][col_iter][0] != 'w':
+                    moves.append(Move((row, col), (row_iter, col_iter), self.board))
+                if self.board[row_iter][col_iter] != '--':
+                    break
 
+            #up-left
+            for it in range(1, 8):
+                row_iter = row - it
+                col_iter = col - it
+                if col_iter < 0 and row_iter < 0:
+                    break
+                if self.board[row_iter][col_iter][0] != 'w':
+                    moves.append(Move((row, col), (row_iter, col_iter), self.board))
+                if self.board[row_iter][col_iter] != '--':
+                    break
 
     def get_queen_moves(self, row, col, moves):
         pass
