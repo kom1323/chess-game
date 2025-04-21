@@ -32,6 +32,7 @@ class GameState():
         #self.stalemate = False
         self.pins = []
         self.checks = []
+        self.in_check = False
 
     def make_move(self, move):
         """
@@ -101,6 +102,7 @@ class GameState():
         else: # not in check so all moves are fine
             moves = self.get_all_possible_moves()
 
+
         return moves
     
 
@@ -169,28 +171,6 @@ class GameState():
                     checks.append((end_row, end_col, move[0], move[1]))
         return in_check, pins, checks
 
-    def in_check(self):
-        """
-        DONT FORGET TO MAYBE DELETE
-        """
-        if self.white_to_move:
-            return self.square_under_attack(self.white_king_location[0], self.white_king_location[1])
-        else:
-            return self.square_under_attack(self.black_king_location[0], self.black_king_location[1])
-
-
-    def square_under_attack(self, row, col):
-        """
-        DONT FORGET TO MAYBE DELETE
-        """
-        self.white_to_move = not self.white_to_move
-        opponent_moves = self.get_all_possible_moves()
-        self.white_to_move = not self.white_to_move
-        for move in opponent_moves:
-            if move.end_row == row and move.end_col == col:
-                return True
-        return False 
-    
 
     def get_all_possible_moves(self):
         """
@@ -203,7 +183,6 @@ class GameState():
                 if (turn == 'w' and self.white_to_move) or (turn =='b' and not self.white_to_move):
                     piece = self.board[row][col][1]
                     self.move_functions[piece](row, col, moves)
-
         return moves
 
     def get_pawn_moves(self, row, col, moves):
@@ -220,7 +199,7 @@ class GameState():
         if self.white_to_move:
             #Handle move white
             if self.board[row - 1][col] == "--": # square in front is empty
-                if not piece_pinned or pin_direction == (-1, 0):
+                if not piece_pinned or pin_direction == (-1, 0) or pin_direction == (1, 0):
                     moves.append(Move((row, col), (row - 1, col), self.board))
                     if row == 6 and self.board[row - 2][col] == "--":
                         moves.append(Move((row, col),(row - 2, col),self.board))
@@ -228,17 +207,17 @@ class GameState():
             #Handle diag captures
             if col + 1 <= 7: 
                 if self.board[row - 1][col + 1][0] == 'b': 
-                    if not piece_pinned or pin_direction == (-1, 1):
+                    if not piece_pinned or pin_direction == (-1, 1) or pin_direction == (1, -1):
                         moves.append(Move((row, col), (row - 1, col + 1), self.board))
             if col - 1 >= 0: 
                 if self.board[row - 1][col - 1][0] == 'b': 
-                    if not piece_pinned or pin_direction == (-1, -1):
+                    if not piece_pinned or pin_direction == (-1, -1) or pin_direction == (1, 1):
                         moves.append(Move((row, col), (row - 1, col - 1), self.board))
         
         else:
             #Handle move black
             if self.board[row + 1][col] == "--": # square in front is empty
-                    if not piece_pinned or pin_direction == (1, 0):
+                    if not piece_pinned or pin_direction == (1, 0) or pin_direction == (-1, 0):
                         moves.append(Move((row, col), (row + 1, col), self.board))
                         if row == 1 and self.board[row + 2][col] == "--":
                             moves.append(Move((row, col),(row + 2, col),self.board))
@@ -246,11 +225,11 @@ class GameState():
             #Handle diag captures
             if col + 1 <= 7: 
                 if self.board[row + 1][col + 1][0] == 'w': 
-                        if not piece_pinned or pin_direction == (1, 1):
+                        if not piece_pinned or pin_direction == (1, 1) or pin_direction == (-1, -1):
                             moves.append(Move((row, col), (row + 1, col + 1), self.board))
             if col - 1 >= 0: 
                 if self.board[row + 1][col - 1][0] == 'w': 
-                    if not piece_pinned or pin_direction == (1, -1):
+                    if not piece_pinned or pin_direction == (1, -1) or pin_direction == (-1, 1):
                         moves.append(Move((row, col), (row + 1, col - 1), self.board))
 
     
@@ -261,7 +240,7 @@ class GameState():
         piece_pinned = False
         pin_direction = ()
         for i in range(len(self.pins) -1, -1 ,-1):
-            if self.pins[i][0] == row and self.pins[i][0] == col:
+            if self.pins[i][0] == row and self.pins[i][1] == col:
                 piece_pinned = True
                 pin_direction = (self.pins[i][2], self.pins[i][3])
                 if self.board[row][col][0] != 'Q': #can't remove queen from pin on rook moves, only remove on bishop moves because I call it after
@@ -275,7 +254,7 @@ class GameState():
             if row_iter < 0:
                 break
             if self.board[row_iter][col][0] != current_turn_color:  
-                if not piece_pinned or pin_direction == (-1, 0):
+                if not piece_pinned or pin_direction == (-1, 0) or pin_direction == (1, 0):
                     moves.append(Move((row, col), (row_iter, col), self.board))
             if self.board[row_iter][col] != '--':
                 break
@@ -286,7 +265,7 @@ class GameState():
             if row_iter > 7:
                 break
             if self.board[row_iter][col][0] != current_turn_color:  
-                if not piece_pinned or pin_direction == (1, 0):
+                if not piece_pinned or pin_direction == (1, 0) or pin_direction == (-1, 0):
                     moves.append(Move((row, col), (row_iter, col), self.board))
             if self.board[row_iter][col] != '--':
                 break
@@ -297,7 +276,7 @@ class GameState():
             if col_iter > 7:
                 break
             if self.board[row][col_iter][0] != current_turn_color:  
-                if not piece_pinned or pin_direction == (0, 1):
+                if not piece_pinned or pin_direction == (0, 1) or pin_direction == (0, -1):
                     moves.append(Move((row, col), (row, col_iter), self.board))
             if self.board[row][col_iter] != '--':
                 break
@@ -307,7 +286,7 @@ class GameState():
             if col_iter < 0:
                 break
             if self.board[row][col_iter][0] != current_turn_color:  
-                if not piece_pinned or pin_direction == (0, -1):
+                if not piece_pinned or pin_direction == (0, -1) or pin_direction == (0, 1):
                     moves.append(Move((row, col), (row, col_iter), self.board))
             if self.board[row][col_iter] != '--':
                 break
@@ -344,14 +323,12 @@ class GameState():
 
         piece_pinned = False
         pin_direction = ()
-        print("Pins size ",len(self.pins)) 
         for i in range(len(self.pins) -1, -1 ,-1):
-            if self.pins[i][0] == row and self.pins[i][0] == col:
+            if self.pins[i][0] == row and self.pins[i][1] == col:
                 piece_pinned = True
                 pin_direction = (self.pins[i][2], self.pins[i][3])
                 self.pins.remove(self.pins[i])
                 break
-
 
         current_turn_color = 'w' if self.white_to_move else 'b'
         
@@ -362,7 +339,7 @@ class GameState():
             if col_iter > 7 or row_iter > 7:
                 break
             if self.board[row_iter][col_iter][0] != current_turn_color:
-                if not piece_pinned or pin_direction == (1, 1):
+                if not piece_pinned or pin_direction == (1, 1) or pin_direction == (-1, -1):
                     moves.append(Move((row, col), (row_iter, col_iter), self.board))
             if self.board[row_iter][col_iter] != '--':
                 break  
@@ -374,7 +351,7 @@ class GameState():
             if col_iter < 0 or row_iter > 7:
                 break
             if self.board[row_iter][col_iter][0] != current_turn_color:
-                if not piece_pinned or pin_direction == (1, -1):
+                if not piece_pinned or pin_direction == (1, -1) or pin_direction == (-1, 1):
                     moves.append(Move((row, col), (row_iter, col_iter), self.board))
             if self.board[row_iter][col_iter] != '--':
                 break
@@ -386,7 +363,7 @@ class GameState():
             if col_iter > 7 or row_iter < 0:
                 break
             if self.board[row_iter][col_iter][0] != current_turn_color:
-                if not piece_pinned or pin_direction == (-1, 1):
+                if not piece_pinned or pin_direction == (-1, 1) or pin_direction == (1, -1):
                     moves.append(Move((row, col), (row_iter, col_iter), self.board))
             if self.board[row_iter][col_iter] != '--':
                 break
@@ -398,7 +375,7 @@ class GameState():
             if col_iter < 0 or row_iter < 0:
                 break
             if self.board[row_iter][col_iter][0] != current_turn_color:
-                if not piece_pinned or pin_direction == (-1, -1):
+                if not piece_pinned or pin_direction == (-1, -1) or pin_direction == (1, 1):
                     moves.append(Move((row, col), (row_iter, col_iter), self.board))
             if self.board[row_iter][col_iter] != '--':
                 break
