@@ -35,6 +35,7 @@ class GameState():
         self.checks = []
         self.in_check = False
         self.enpassant_possible = () # coordinates for the square where the en passant capture is possible
+        self.enpassant_possible_log = [()]
         self.current_castling_right = CastleRights(True, True, True, True)
         self.castle_rights_log =[copy.deepcopy(self.current_castling_right)]
     def make_move(self, move):
@@ -57,6 +58,10 @@ class GameState():
         if move.is_enpassant_move:
             self.board[move.start_row][move.end_col] = '--' # capturing the pawn
         
+
+        # Save current en passant square before potentially changing it
+        self.enpassant_possible_log.append(self.enpassant_possible)
+
         #update enpasssant_possible variable
         if move.piece_moved[1] == 'P' and abs(move.start_row - move.end_row) == 2: # two square pawn advances
             self.enpassant_possible = ((move.start_row + move.end_row) // 2, move.start_col)
@@ -93,10 +98,8 @@ class GameState():
         if move.is_enpassant_move:
             self.board[move.end_row][move.end_col] = "--"
             self.board[move.start_row][move.end_col] = move.piece_captured
-            self.enpassant_possible = (move.end_row, move.end_col)
-        # undo a 2 square pawn advance
-        if move.piece_moved[1] == 'P' and abs(move.start_row - move.end_row) == 2:
-            self.enpassant_possible = ()
+        self.enpassant_possible = self.enpassant_possible_log.pop()
+       
 
 
         # undo castling rights
@@ -271,17 +274,52 @@ class GameState():
                     in_check = True
                     checks.append((end_row, end_col, move[0], move[1]))
         return in_check, pins, checks
+    
+    def square_under_attack_by_color(self, row, col, color):
+        
+        possible_directions = ((-1, 0), (0, -1), (1, 0), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1))
+        for dir_iter in range(len(possible_directions)):
+            direction = possible_directions[dir_iter]
+            for i in range(1, 8):
+                end_row = row + direction[0] * i
+                end_col = col + direction[1] * i
+                if 0 <= end_row < 8 and 0 <= end_col < 8:
+                    end_piece = self.board[end_row][end_col]
+                    
+                    if end_piece != '--':  # There's a piece at the square
+                        if end_piece[0] == color:  # Same color piece
+                            piece_type = end_piece[1]
 
+                            # Check if the piece can attack the square
+                            if (direction[0] == 0 or direction[1] == 0) and piece_type == 'R':  # Rook (orthogonal)
+                                return True
+                            elif abs(direction[0]) == abs(direction[1]) and piece_type == 'B':  # Bishop (diagonal)
+                                return True
+                            elif i == 1 and piece_type == 'P':  # Pawn attack (only one square away)
+                                if (color == 'w' and direction in [(-1, -1), (-1, 1)]) or \
+                                    (color == 'b' and direction in [(1, -1), (1, 1)]):  # Pawn attack diagonally
+                                    return True
+                            elif piece_type == 'Q':  # Queen (any direction)
+                                return True
+                            elif i == 1 and piece_type == 'K':  # King (1 square away)
+                                return True
+                        else:  # Enemy piece blocks the attack path
+                            break  # Stop checking further in this direction
 
-    def square_under_attack(self, row, col):
-        self.white_to_move = not self.white_to_move
-        opponent_moves = self.get_all_possible_moves()
-        self.white_to_move = not self.white_to_move
-        for move in opponent_moves:
-            if move.end_row == row and move.end_col == col:
-                return True
+                else:  # Off board, break the loop
+                    break
+
+        #check for knight checks
+        knight_moves = ((-2,-1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1))
+        for move in knight_moves:
+            end_row = row + move[0]
+            end_col = col + move[1]
+            if 0 <= end_row < 8 and 0 <= end_col < 8:
+                end_piece = self.board[end_row][end_col]
+                if end_piece[0] == color and end_piece[1] == 'N': # enemy knight attacking king
+                    return True
         return False
-
+    
     def get_all_possible_moves(self):
         """
         All moves without considering checks.
@@ -498,7 +536,7 @@ class GameState():
     def get_king_moves(self, row, col, moves):
         current_turn_color = 'w' if self.white_to_move else 'b'
         possible_moves = [(row - 1, col - 1), (row - 1, col), (row - 1, col + 1),
-                          (row, col - 1), (row, col), (row, col + 1),
+                          (row, col - 1), (row, col + 1),
                           (row + 1, col - 1), (row + 1, col), (row + 1, col + 1)]
         
         for move in possible_moves:
@@ -523,6 +561,7 @@ class GameState():
         """
         Generate all valid caslte moves for the king at (row, col) and add them to the list of moves
         """
+
         if self.in_check:
             return # we cant castle
         if (self.white_to_move and self.current_castling_right.white_k_side) or \
@@ -533,12 +572,14 @@ class GameState():
             self.get_queen_side_castle_moves(row, col, moves)
         
     def get_king_side_castle_moves(self, row, col, moves):
+        enemy_color = 'w' if self.white_to_move else 'b'
         if self.board[row][col + 1] == '--' and self.board[row][col + 2] == '--':
-            if not self.square_under_attack(row, col + 1) and not self.square_under_attack(row, col + 2):
+            if not self.square_under_attack_by_color(row, col + 1, enemy_color) and not self.square_under_attack_by_color(row, col + 2, enemy_color):
                 moves.append(Move((row, col), (row, col + 2), self.board, is_castle_move=True))
     def get_queen_side_castle_moves(self, row, col, moves):
+        enemy_color = 'w' if self.white_to_move else 'b'
         if self.board[row][col - 1] == '--' and self.board[row][col - 2] == '--' and self.board[row][col - 3] == '--':
-            if not self.square_under_attack(row, col - 1) and not self.square_under_attack(row, col - 2):
+            if not self.square_under_attack_by_color(row, col - 1, enemy_color) and not self.square_under_attack_by_color(row, col - 2, enemy_color):
                 moves.append(Move((row, col), (row, col - 2), self.board, is_castle_move=True))
 class CastleRights():
     def __init__(self, white_k_side, white_q_side, black_k_side, black_q_side):

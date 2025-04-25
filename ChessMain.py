@@ -166,7 +166,7 @@ def animate_move(move, screen, board, clock):
         end_square = p.Rect(move.end_col * SQ_SIZE, move.end_row * SQ_SIZE, SQ_SIZE, SQ_SIZE)
         p.draw.rect(screen, color, end_square)
         # draw captured piece onto rectangle
-        if move.piece_captured != '--':
+        if move.piece_captured != '--' and not move.is_enpassant_move:
             screen.blit(IMAGES[move.piece_captured], end_square)
         # draw moving piece
         screen. blit(IMAGES[move.piece_moved], p.Rect(col*SQ_SIZE, row*SQ_SIZE, SQ_SIZE, SQ_SIZE))
