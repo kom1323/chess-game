@@ -77,6 +77,7 @@ def main():
                         game_state.undo_move()
                         move_made = True
                         animate = False
+                        game_over = False
                     if e.key == p.K_r: # reset when r is pressed
                         game_state = ChessEngine.GameState()
                         valid_moves = game_state.get_valid_moves()
@@ -84,7 +85,7 @@ def main():
                         player_clicks = []
                         move_made = False
                         animate = False
-                        break
+                        game_over = False
 
         # AI move logic
         if not game_over and not is_human_turn:

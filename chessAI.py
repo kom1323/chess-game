@@ -19,18 +19,24 @@ def find_best_move(game_state, valid_moves):
         game_state.make_move(player_move)
         opponent_max_score = - CHECKMATE
         all_opponent_moves = game_state.get_valid_moves()
-        for opponent_move in all_opponent_moves: 
-            game_state.make_move(opponent_move)
-            if game_state.checkmate:
-                score = -CHECKMATE #### CHECK IF CORRECT
-            elif game_state.stalemate:
-                score = 0
-            else: 
-                score = -turn_multiplier * score_material(game_state.board)
-            if score > opponent_max_score:
-                opponent_max_score = score
-                
-            game_state.undo_move()
+
+        if game_state.checkmate:
+            score = -CHECKMATE 
+        elif game_state.stalemate:
+            score = STALEMATE
+        else:
+            for opponent_move in all_opponent_moves: 
+                game_state.make_move(opponent_move)
+                game_state.get_valid_moves()
+                if game_state.checkmate:
+                    score = CHECKMATE 
+                elif game_state.stalemate:
+                    score = STALEMATE
+                else: 
+                    score = -turn_multiplier * score_material(game_state.board)
+                if score > opponent_max_score:
+                    opponent_max_score = score    
+                game_state.undo_move()
         
         if opponent_min_max_score > opponent_max_score: 
             opponent_min_max_score = opponent_max_score
