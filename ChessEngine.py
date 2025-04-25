@@ -22,6 +22,7 @@ class GameState():
             ["wP", "wP", "wP", "wP", "wP", "wP", "wP", "wP"],
             ["wR", "wN", "wB", "wQ", "wK", "wB", "wN", "wR"]
         ]
+    
         
         self.move_functions = {'P': self.get_pawn_moves, 'R': self.get_rook_moves, 'N':self.get_knight_moves,
                                'B': self.get_bishop_moves, 'Q': self.get_queen_moves, 'K': self.get_king_moves}
@@ -100,8 +101,6 @@ class GameState():
             self.board[move.start_row][move.end_col] = move.piece_captured
         self.enpassant_possible = self.enpassant_possible_log.pop()
        
-
-
         # undo castling rights
         self.castle_rights_log.pop()
         self.current_castling_right  = self.castle_rights_log[-1]
@@ -488,7 +487,7 @@ class GameState():
             if col_iter > 7 or row_iter > 7:
                 break
             if self.board[row_iter][col_iter][0] != current_turn_color:
-                if not piece_pinned or pin_direction == (1, 1) or pin_direction == (-1, -1):
+                if not piece_pinned  or pin_direction == (-1, -1):
                     moves.append(Move((row, col), (row_iter, col_iter), self.board))
             if self.board[row_iter][col_iter] != '--':
                 break  
@@ -500,7 +499,7 @@ class GameState():
             if col_iter < 0 or row_iter > 7:
                 break
             if self.board[row_iter][col_iter][0] != current_turn_color:
-                if not piece_pinned or pin_direction == (1, -1) or pin_direction == (-1, 1):
+                if not piece_pinned or pin_direction == (1, -1):
                     moves.append(Move((row, col), (row_iter, col_iter), self.board))
             if self.board[row_iter][col_iter] != '--':
                 break
@@ -512,7 +511,7 @@ class GameState():
             if col_iter > 7 or row_iter < 0:
                 break
             if self.board[row_iter][col_iter][0] != current_turn_color:
-                if not piece_pinned or pin_direction == (-1, 1) or pin_direction == (1, -1):
+                if not piece_pinned or pin_direction == (-1, 1):
                     moves.append(Move((row, col), (row_iter, col_iter), self.board))
             if self.board[row_iter][col_iter] != '--':
                 break
@@ -524,7 +523,7 @@ class GameState():
             if col_iter < 0 or row_iter < 0:
                 break
             if self.board[row_iter][col_iter][0] != current_turn_color:
-                if not piece_pinned or pin_direction == (-1, -1) or pin_direction == (1, 1):
+                if not piece_pinned or pin_direction == (-1, -1):
                     moves.append(Move((row, col), (row_iter, col_iter), self.board))
             if self.board[row_iter][col_iter] != '--':
                 break
@@ -572,12 +571,12 @@ class GameState():
             self.get_queen_side_castle_moves(row, col, moves)
         
     def get_king_side_castle_moves(self, row, col, moves):
-        enemy_color = 'w' if self.white_to_move else 'b'
+        enemy_color = 'b' if self.white_to_move else 'w'
         if self.board[row][col + 1] == '--' and self.board[row][col + 2] == '--':
             if not self.square_under_attack_by_color(row, col + 1, enemy_color) and not self.square_under_attack_by_color(row, col + 2, enemy_color):
                 moves.append(Move((row, col), (row, col + 2), self.board, is_castle_move=True))
     def get_queen_side_castle_moves(self, row, col, moves):
-        enemy_color = 'w' if self.white_to_move else 'b'
+        enemy_color = 'b' if self.white_to_move else 'w'
         if self.board[row][col - 1] == '--' and self.board[row][col - 2] == '--' and self.board[row][col - 3] == '--':
             if not self.square_under_attack_by_color(row, col - 1, enemy_color) and not self.square_under_attack_by_color(row, col - 2, enemy_color):
                 moves.append(Move((row, col), (row, col - 2), self.board, is_castle_move=True))
