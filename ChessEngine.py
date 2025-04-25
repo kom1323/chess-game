@@ -411,7 +411,7 @@ class GameState():
 
         piece_pinned = False
         for i in range(len(self.pins) -1, -1 ,-1):
-            if self.pins[i][0] == row and self.pins[i][0] == col:
+            if self.pins[i][0] == row and self.pins[i][1] == col:
                 piece_pinned = True
                 self.pins.remove(self.pins[i])
                 break
