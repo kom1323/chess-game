@@ -39,8 +39,8 @@ def main():
     square_selected = () # Keep track of the last click of the user (row, col)
     player_clicks = [] # two tuples
     game_over = False
-    player_one = False # if human is playing white then True, if Ai then False
-    player_two = False # same as above but for black
+    player_one = True # if human is playing white then True, if Ai then False
+    player_two = True # same as above but for black
     while running:
         is_human_turn = (game_state.white_to_move and player_one) or (not game_state.white_to_move and player_two)
         
@@ -184,7 +184,11 @@ def animate_move(move, screen, board, clock):
         end_square = p.Rect(move.end_col * SQ_SIZE, move.end_row * SQ_SIZE, SQ_SIZE, SQ_SIZE)
         p.draw.rect(screen, color, end_square)
         # draw captured piece onto rectangle
-        if move.piece_captured != '--' and not move.is_enpassant_move:
+        if move.piece_captured != '--':
+            if move.is_enpassant_move:
+                enpassant_row = move.end_row + 1 if move.piece_captured[0] == 'b' else move.end_row -1 
+                end_square = p.Rect(move.end_col * SQ_SIZE, enpassant_row * SQ_SIZE, SQ_SIZE, SQ_SIZE)
+
             screen.blit(IMAGES[move.piece_captured], end_square)
         # draw moving piece
         screen. blit(IMAGES[move.piece_moved], p.Rect(col*SQ_SIZE, row*SQ_SIZE, SQ_SIZE, SQ_SIZE))
