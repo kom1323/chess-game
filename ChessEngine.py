@@ -41,7 +41,7 @@ class GameState():
         self.castle_rights_log =[copy.deepcopy(self.current_castling_right)]
     def make_move(self, move):
         """
-        Takes a Move as a parameter and executes it (will not work for castling and en passant)
+        Takes a Move as a parameter and executes it.
         """
         self.board[move.start_row][move.start_col] = "--"
         self.board[move.end_row][move.end_col] = move.piece_moved
@@ -55,11 +55,11 @@ class GameState():
         # pawn promotion
         if move.is_pawn_promotion: 
             self.board[move.end_row][move.end_col] = move.piece_moved[0] + 'Q'
+            move.promoted_piece = 'Q'
         # enpassant move
         if move.is_enpassant_move:
             self.board[move.start_row][move.end_col] = '--' # capturing the pawn
-        
-
+      
         # Save current en passant square before potentially changing it
         self.enpassant_possible_log.append(self.enpassant_possible)
 
@@ -81,6 +81,11 @@ class GameState():
         #update castling rights whenever rook or king moves
         self.update_castle_rights(move)
         self.castle_rights_log.append(copy.deepcopy(self.current_castling_right))
+
+
+        #check for checks for move log
+        if self.is_opponent_in_check('b' if self.white_to_move else 'w'):
+            move.is_check_move = True
 
 
     def undo_move(self):
@@ -154,6 +159,15 @@ class GameState():
                 elif move.end_col == 7:
                     self.current_castling_right.black_k_side = False
 
+    def is_opponent_in_check(self, opponent_color):                     #ADD THIS TO THE MOVE TO UPDATE MOVE LOG!!!!!!!!!!!!!!!!!!!!!!!!
+        """
+        Determines if the given player's king is in check.
+        Returns True if the opponent player's king is in check, False otherwise.
+        """
+        king_position = self.white_king_location if opponent_color == 'b' else self.black_king_location 
+        if self.square_under_attack_by_color(king_position[0], king_position[1], opponent_color):
+            return True
+        return False
 
     def get_valid_moves(self):
         """
@@ -208,10 +222,10 @@ class GameState():
             else:
                 self.stalemate = True
 
+
         self.current_castling_right = temp_current_castle_rights
         return moves
     
-
     def check_for_pins_and_checks(self):
         pins = []
         checks = []
@@ -287,7 +301,6 @@ class GameState():
                 end_col = col + direction[1] * i
                 if 0 <= end_row < 8 and 0 <= end_col < 8:
                     end_piece = self.board[end_row][end_col]
-                    
                     if end_piece != '--':  # There's a piece at the square
                         if end_piece[0] == color:  # Same color piece
                             piece_type = end_piece[1]
@@ -298,8 +311,8 @@ class GameState():
                             elif abs(direction[0]) == abs(direction[1]) and piece_type == 'B':  # Bishop (diagonal)
                                 return True
                             elif i == 1 and piece_type == 'P':  # Pawn attack (only one square away)
-                                if (color == 'w' and direction in [(-1, -1), (-1, 1)]) or \
-                                    (color == 'b' and direction in [(1, -1), (1, 1)]):  # Pawn attack diagonally
+                                if (color == 'w' and direction in [(1, -1), (1, 1)]) or \
+                                    (color == 'b' and direction in [(-1, -1), (-1, 1)]):  # Pawn attack diagonally  
                                     return True
                             elif piece_type == 'Q':  # Queen (any direction)
                                 return True
@@ -556,9 +569,6 @@ class GameState():
                 else:
                     self.black_king_location = (row,col)
         
-
-
-
     def get_castle_moves(self, row, col, moves):
         """
         Generate all valid caslte moves for the king at (row, col) and add them to the list of moves
@@ -578,6 +588,7 @@ class GameState():
         if self.board[row][col + 1] == '--' and self.board[row][col + 2] == '--':
             if not self.square_under_attack_by_color(row, col + 1, enemy_color) and not self.square_under_attack_by_color(row, col + 2, enemy_color):
                 moves.append(Move((row, col), (row, col + 2), self.board, is_castle_move=True))
+   
     def get_queen_side_castle_moves(self, row, col, moves):
         enemy_color = 'b' if self.white_to_move else 'w'
         if self.board[row][col - 1] == '--' and self.board[row][col - 2] == '--' and self.board[row][col - 3] == '--':
@@ -617,6 +628,8 @@ class Move():
         #castle move
         self.is_castle_move = is_castle_move
         self.is_capture = self.piece_captured != "--"
+        self.promoted_piece = None
+        self.is_check_move = False
         
 
     def __eq__(self, value):
@@ -631,19 +644,20 @@ class Move():
         if self.is_castle_move:
             return "O-O" if self.end_col == 6 else "O-O-O"
         
+        # adding checks
         end_square = self.get_rank_file(self.end_row, self.end_col)
+        if self.is_check_move:
+            end_square += '+'
 
         # pawn moves
         if self.piece_moved[1] == 'P':
-            if self.piece_captured:
+            if self.is_pawn_promotion:
+                end_square += "=" + self.promoted_piece
+            if self.is_capture:
                 return self.cols_to_files[self.start_col] + "x" + end_square
             else:
                 return end_square
 
-        #pawn promotions
-        # two of the same type move into the same square
-        # adding + to check moves 
-        # 
         #piece moves 
         move_string = self.piece_moved[1]
         if self.is_capture:
