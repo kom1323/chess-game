@@ -616,6 +616,7 @@ class Move():
             self.piece_captured = 'wP' if self.piece_moved == 'bP' else 'bP'
         #castle move
         self.is_castle_move = is_castle_move
+        self.is_capture = self.piece_captured != "--"
         
 
     def __eq__(self, value):
@@ -625,6 +626,31 @@ class Move():
         if isinstance(value, Move):
             return self.move_id == value.move_id
         return False
+
+    def __str__(self):
+        if self.is_castle_move:
+            return "O-O" if self.end_col == 6 else "O-O-O"
+        
+        end_square = self.get_rank_file(self.end_row, self.end_col)
+
+        # pawn moves
+        if self.piece_moved[1] == 'P':
+            if self.piece_captured:
+                return self.cols_to_files[self.start_col] + "x" + end_square
+            else:
+                return end_square
+
+        #pawn promotions
+        # two of the same type move into the same square
+        # adding + to check moves 
+        # 
+        #piece moves 
+        move_string = self.piece_moved[1]
+        if self.is_capture:
+            move_string += 'x'
+        return move_string + end_square
+
+
 
     def get_chess_notation(self):
         return self.get_rank_file(self.start_row, self.start_col) + self.get_rank_file(self.end_row, self.end_col)

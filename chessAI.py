@@ -53,6 +53,7 @@ def find_best_move(game_state, valid_moves):
     global next_move
     next_move = None
     #find_move_min_max(game_state, valid_moves, DEPTH, game_state.white_to_move)
+    random.shuffle(valid_moves)
     find_move_nega_max_alpha_beta(game_state, valid_moves, DEPTH, -CHECKMATE, CHECKMATE, 1 if game_state.white_to_move else -1)
     return next_move
 
