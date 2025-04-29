@@ -4,7 +4,7 @@ It will be responsible for handling user input and displaying the current GameSt
 """
 import pygame as p
 import ChessEngine, chessAI
-
+from multiprocessing import Process, Queue
 
 BOARD_WIDTH = BOARD_HEIGHT = 512
 MOVE_LOG_PANEL_WIDTH = 150
@@ -43,8 +43,10 @@ def main():
     player_clicks = [] # two tuples
     game_over = False
     player_one = True # if human is playing white then True, if Ai then False
-    player_two = True # same as above but for black
-    
+    player_two = False # same as above but for black
+    ai_thinking = False
+    move_finder_process = False
+    move_undone = False
     while running:
         is_human_turn = (game_state.white_to_move and player_one) or (not game_state.white_to_move and player_two)
         
@@ -54,7 +56,7 @@ def main():
             #Mouse handler
             elif e.type == p.MOUSEBUTTONDOWN:
                 # game logic
-                if not game_over and is_human_turn:
+                if not game_over:
                     location = p.mouse.get_pos()
                     col = location[0] // SQ_SIZE
                     row = location[1] // SQ_SIZE
@@ -64,7 +66,7 @@ def main():
                     else:
                         square_selected = (row ,col)
                         player_clicks.append(square_selected)
-                    if len(player_clicks) == 2:
+                    if len(player_clicks) == 2 and is_human_turn:
                         move = ChessEngine.Move(player_clicks[0], player_clicks[1], game_state.board)
                         for i in range(len(valid_moves)):
                             if move == valid_moves[i]:
@@ -83,26 +85,43 @@ def main():
                         move_made = True
                         animate = False
                         game_over = False
+                        if ai_thinking:
+                            move_finder_process.terminate()
+                            ai_thinking = False
+                        move_undone = True
                     if e.key == p.K_r: # reset when r is pressed
                         game_state = ChessEngine.GameState()
                         valid_moves = game_state.get_valid_moves()
                         square_selected = ()
                         player_clicks = []
+                        if ai_thinking:
+                            move_finder_process.terminate()
+                            ai_thinking = False
                         move_made = False
                         animate = False
                         game_over = False
+                        move_undone = True
            
 
       
 
         # AI move logic
-        if not game_over and not is_human_turn:
-            ai_move = chessAI.find_best_move(game_state, valid_moves)
-            if ai_move is None:
-                ai_move = chessAI.find_random_move(valid_moves)
-            game_state.make_move(ai_move)
-            move_made = True
-            animate = True
+        if not game_over and not is_human_turn and not move_undone:
+            if not ai_thinking:
+                ai_thinking = True
+                print("Thinking...")
+                return_queue = Queue()  # used to pass data between threads
+                move_finder_process = Process(target=chessAI.find_best_move, args=(game_state, valid_moves, return_queue))
+                move_finder_process.start()
+            if not move_finder_process.is_alive():
+                print("Done thinking")
+                ai_move = return_queue.get()    
+                if ai_move is None:
+                    ai_move = chessAI.find_random_move(valid_moves)
+                game_state.make_move(ai_move)
+                move_made = True
+                animate = True
+                ai_thinking = False
 
 
 
@@ -112,6 +131,7 @@ def main():
             valid_moves = game_state.get_valid_moves()
             move_made = False
             animate = False
+            move_undone = False
 
         draw_game_state(screen, game_state, valid_moves, square_selected, move_log_font)
 

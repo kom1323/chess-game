@@ -1,9 +1,141 @@
 import random
 
 piece_score ={'K':0, 'Q': 9, 'R':5, 'B':3, 'N':3, 'P':1}
+
+white_knight_score = [[1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 2, 2, 2, 2, 2, 2, 1],
+                [1, 2, 3, 3, 3, 3, 2, 1],
+                [1, 2, 5, 5, 5, 5, 2, 1],
+                [1, 2, 3, 4, 4, 3, 2, 1],
+                [1, 2, 3, 3, 3, 3, 2, 1],
+                [1, 2, 2, 2, 2, 2, 2, 1],
+                [0, 0, 0, 0, 0, 0, 0, 0]
+                ]
+
+
+black_knight_score = [[0, 0, 0, 0, 0, 0, 0, 0],
+                      [1, 2, 2, 2, 2, 2, 2, 1],
+                      [1, 2, 3, 3, 3, 3, 2, 1],
+                      [1, 2, 3, 4, 4, 3, 2, 1],
+                      [1, 2, 5, 5, 5, 5, 2, 1],
+                      [1, 2, 3, 3, 3, 3, 2, 1],
+                      [1, 2, 2, 2, 2, 2, 2, 1],
+                      [1, 1, 1, 1, 1, 1, 1, 1],
+]
+
+
+white_bishop_score = [  [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 2, 2, 1, 1, 2, 2, 1],
+                        [1, 1, 1, 2, 2, 1, 1, 1],
+                        [1, 2, 1, 1, 1, 1, 2, 1],
+                        [0, 0, 0, 0, 0, 0, 0, 0]
+                ]
+
+black_bishop_score = [[0, 0, 0, 0, 0, 0, 0, 0],
+                [1, 2, 1, 1, 1, 1, 2, 1],
+                [1, 1, 1, 2, 2, 1, 1, 1],
+                [1, 2, 2, 1, 1, 2, 2, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1, 1, 1, 1],
+                ]
+white_rook_score = [[1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 2, 3, 3, 2, 1, 1],
+                    [0, 1, 2, 4, 4, 2, 1, 0],
+                ]
+black_rook_score = [[0, 1, 2, 4, 4, 2, 1, 0],
+                    [1, 1, 2, 3, 3, 2, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                ]
+white_queen_score = [   [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 2, 1, 1, 1, 1, 2, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 2, 1, 1, 1, 1, 2, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 2, 2, 1, 1, 1],
+                        [0, 0, 0, 0, 0, 0, 0, 0],
+                ]
+black_queen_score = [   [0, 0, 0, 0, 0, 0, 0, 0],
+                        [1, 1, 1, 2, 2, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 2, 1, 1, 1, 1, 2, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                        [1, 2, 1, 1, 1, 1, 2, 1],
+                        [1, 1, 1, 1, 1, 1, 1, 1],
+                ]
+white_pawn_score = [[10, 10, 10, 10, 10, 10, 10, 10],
+                    [5, 5, 5, 5, 5, 5, 5, 5],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 3, 3, 1, 1, 1],
+                    [1, 1, 1, 5, 5, 1, 1, 1],
+                    [2, 1, 2, 4, 4, 2, 1, 2],
+                    [1, 1, 1, 0, 0, 1, 1, 1],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                ]
+
+black_pawn_score = [[0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 1, 1, 0, 0, 1, 1, 1],
+                    [2, 1, 2, 4, 4, 2, 1, 2],
+                    [1, 1, 1, 5, 5, 1, 1, 1],
+                    [1, 1, 1, 3, 3, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [5, 5, 5, 5, 5, 5, 5, 5],
+                    [10, 10, 10, 10, 10, 10, 10, 10],
+                ]
+
+white_king_score = [
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 0, -1, -1, -1, -1, 0, 1],
+                    [3, 5, 2, 0, 1, 0, 3, 7],
+                    ]
+
+black_king_score = [
+                    [3, 5, 2, 0, 1, 0, 3, 7],
+                    [1, 0, -1, -1, -1, -1, 0, 1],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+
+
+
+]
+
+
+
+piece_position_scores = {'wN': white_knight_score, 'bN': black_knight_score,
+                         'wB': white_bishop_score, 'bB': black_bishop_score,
+                         'wR': white_rook_score, 'bR': black_rook_score,
+                         'wP': white_pawn_score, 'bP': black_pawn_score,
+                         'wQ': white_queen_score, 'bQ': black_queen_score,
+                         'wK': white_king_score, 'bK': black_king_score}
+
 CHECKMATE = 1000
 STALEMATE = 0 
-DEPTH = 2
+DEPTH = 4
 
 def find_random_move(valid_moves):
     return valid_moves[random.randint(0, len(valid_moves) - 1)]
@@ -46,7 +178,7 @@ def find_best_move_iterative_min_max(game_state, valid_moves):
         game_state.undo_move()
     return best_player_move
 
-def find_best_move(game_state, valid_moves):
+def find_best_move(game_state, valid_moves, return_queue):
     """
     Helper function for first recursive call.
     """
@@ -55,7 +187,7 @@ def find_best_move(game_state, valid_moves):
     #find_move_min_max(game_state, valid_moves, DEPTH, game_state.white_to_move)
     random.shuffle(valid_moves)
     find_move_nega_max_alpha_beta(game_state, valid_moves, DEPTH, -CHECKMATE, CHECKMATE, 1 if game_state.white_to_move else -1)
-    return next_move
+    return_queue.put(next_move)
 
 def find_move_min_max(game_state, valid_moves, depth, white_to_move):
     global next_move
@@ -103,6 +235,7 @@ def find_move_nega_max_alpha_beta(game_state, valid_moves, depth, alpha, beta, t
             max_score = score
             if depth == DEPTH:
                 next_move = move
+                print(move, score)
 
         game_state.undo_move()
         if max_score > alpha: # pruning
@@ -125,12 +258,16 @@ def score_board(game_state):
         return STALEMATE
     
     score = 0
-    for row in game_state.board:
-        for square in row:
+    for row in range(len(game_state.board)):
+        for col in range(len(game_state.board[row])):
+            square = game_state.board[row][col]
+            position_score = 0
+            if square != "--":
+                position_score = piece_position_scores[square][row][col]
             if square[0] == 'w':
-                score += piece_score[square[1]]
+                score += piece_score[square[1]] + position_score * .1
             elif square[0] == 'b':
-                score -= piece_score[square[1]]
+                score -= piece_score[square[1]] + position_score * .1
                 
     return score
 
