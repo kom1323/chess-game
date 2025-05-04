@@ -3,7 +3,7 @@ This is our main driver file.
 It will be responsible for handling user input and displaying the current GameState object.
 """
 import pygame as p
-import ChessEngine, chessAI
+import chess_engine, chess_AI
 from multiprocessing import Process, Queue
 
 BOARD_WIDTH = BOARD_HEIGHT = 512
@@ -33,7 +33,7 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color("white"))
     move_log_font = p.font.SysFont("Arial", 14, False, False)
-    game_state = ChessEngine.GameState()
+    game_state = chess_engine.GameState()
     valid_moves = game_state.get_valid_moves()
     move_made = False # flag variable whether a move is made
     animate = False # flag variable  whether to animate a move
@@ -42,7 +42,7 @@ def main():
     square_selected = () # Keep track of the last click of the user (row, col)
     player_clicks = [] # two tuples
     game_over = False
-    player_one = False # if human is playing white then True, if Ai then False
+    player_one = True # if human is playing white then True, if Ai then False
     player_two = False # same as above but for black
     ai_thinking = False
     move_finder_process = False
@@ -67,7 +67,7 @@ def main():
                         square_selected = (row ,col)
                         player_clicks.append(square_selected)
                     if len(player_clicks) == 2 and is_human_turn:
-                        move = ChessEngine.Move(player_clicks[0], player_clicks[1], game_state.board)
+                        move = chess_engine.Move(player_clicks[0], player_clicks[1], game_state.board)
                         for i in range(len(valid_moves)):
                             if move == valid_moves[i]:
                                 game_state.make_move(valid_moves[i])
@@ -90,7 +90,7 @@ def main():
                             ai_thinking = False
                         move_undone = True
                     if e.key == p.K_r: # reset when r is pressed
-                        game_state = ChessEngine.GameState()
+                        game_state = chess_engine.GameState()
                         valid_moves = game_state.get_valid_moves()
                         square_selected = ()
                         player_clicks = []
@@ -111,13 +111,13 @@ def main():
                 ai_thinking = True
                 print("Thinking...")
                 return_queue = Queue()  # used to pass data between threads
-                move_finder_process = Process(target=chessAI.find_best_move, args=(game_state, valid_moves, return_queue))
+                move_finder_process = Process(target=chess_AI.find_best_move, args=(game_state, valid_moves, return_queue))
                 move_finder_process.start()
             if not move_finder_process.is_alive():
                 print("Done thinking")
                 ai_move = return_queue.get()    
                 if ai_move is None:
-                    ai_move = chessAI.find_random_move(valid_moves)
+                    ai_move = chess_AI.find_random_move(valid_moves)
                 game_state.make_move(ai_move)
                 move_made = True
                 animate = True
