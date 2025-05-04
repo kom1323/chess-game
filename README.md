@@ -21,10 +21,13 @@ r - reset board
 2. Setup a Python virtual environment with all the Python dependencies based on [requirements.txt](requirements.txt).
 3. Choose whether a bot is playing or not in lines 45,46.
    
-    `player_one = False`
-    `player_two = False`
-    player_one is white, player_two is black. `False` means the bot is playing.
-4. Run **chess_main.py**.
+    ```python
+    player_one = False
+    player_two = False 
+   ```
+   `player_one` is white, `player_two` is black.
+   `False` means a bot is playing.
+5. Run **chess_main.py**.
 
 # Techniques 
 pygame
