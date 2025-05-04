@@ -3,7 +3,7 @@ This repository contains a chess app. The app also include move history, animati
 
 # Example Videos
 
-
+https://github.com/user-attachments/assets/ebccc886-a33f-4e48-a42b-57a551fde8b3
 
 
 
@@ -11,9 +11,9 @@ This repository contains a chess app. The app also include move history, animati
 
 # Controlls
 
-Mouse clicks - move
-z - undo
-r - reset board
+- Mouse clicks – move
+- `z` – undo
+- `r` – reset board
 
 # Try It Yourself
 
